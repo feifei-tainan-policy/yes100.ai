@@ -1,16 +1,17 @@
 // DOM 介面：清單、卡片、HUD、導覽說明、影片、手機底部抽屜
-import { TAGS, SOURCES } from "./data.js?v=20261027";
-import { escapeHTML as h, store } from "./util.js?v=20261027";
-import { RAINBOW } from "./models.js?v=20261027";
-import { ROLE_LABEL, CARRY_LABEL } from "./people.js?v=20261027";
-import { qrSVG } from "./qr.js?v=20261027";
-import { stampURL } from "./stamps.js?v=20261027";
-import { islandURL, opinionURL } from "./share.js?v=20261027";
-import { track } from "./track.js?v=20261027";
+import { TAGS, SOURCES } from "./data.js?v=20261027-2";
+import { escapeHTML as h, store } from "./util.js?v=20261027-2";
+import { RAINBOW } from "./models.js?v=20261027-2";
+import { ROLE_LABEL, CARRY_LABEL } from "./people.js?v=20261027-2";
+import { qrSVG } from "./qr.js?v=20261027-2";
+import { stampURL } from "./stamps.js?v=20261027-2";
+import { islandURL, opinionURL } from "./share.js?v=20261027-2";
+import { track } from "./track.js?v=20261027-2";
 
 const CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩";
 // 每個版本資料夾各記各的「看過導覽說明」，新版本的說明才會再出現一次
-const INTRO_KEY = `feifei-${location.pathname.split("/")[1] || "island"}:intro:v1`;
+// （v2：/island 換成新版，看過舊版說明的人會再看到一次）
+const INTRO_KEY = `feifei-${location.pathname.split("/")[1] || "island"}:intro:v2`;
 export const circled = (i) => CIRCLED[i] || String(i + 1);
 const srcText = (ids) => (Array.isArray(ids) ? ids : [ids]).map((s) => SOURCES[s] || s).join("、");
 export const pinColor = (isl, i) => (isl.rainbow ? "#" + RAINBOW[i % RAINBOW.length].toString(16).padStart(6, "0") : isl.color);
