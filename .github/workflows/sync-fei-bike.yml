@@ -6,7 +6,7 @@ name: Sync fei-bike
 on:
   schedule:
     # GitHub 最短 5 分鐘一次，尖峰時段可能延遲
-    - cron: "2-57/5 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
