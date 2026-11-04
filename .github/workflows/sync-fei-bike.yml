@@ -1,0 +1,65 @@
+name: Sync fei-bike
+
+# 定時讀取公開的 willie-yes100/willie-yes100.github.io，把 fei-bike/ 複製到 https://yes100.ai/fei-bike/。
+# 只讀取來源 repo，不會改動它；來源沒有變動就不會產生 commit。
+# 測試版 preview/ 不複製。頁面裡的舊網址會換成 yes100.ai，分享卡和社群預覽才會連到這裡。
+on:
+  schedule:
+    # GitHub 最短 5 分鐘一次，尖峰時段可能延遲
+    - cron: "2-57/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-fei-bike
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout yes100.ai
+        uses: actions/checkout@v7
+
+      - name: Checkout source
+        uses: actions/checkout@v7
+        with:
+          repository: willie-yes100/willie-yes100.github.io
+          path: .source
+          persist-credentials: false
+
+      - name: Copy fei-bike
+        run: |
+          SRC=.source/fei-bike
+          # 來源不完整時停在這裡，線上頁面維持原樣
+          test -s "$SRC/index.html"
+          grep -q '</html>' "$SRC/index.html"
+          rm -rf fei-bike
+          cp -r "$SRC" fei-bike
+          rm -rf fei-bike/preview
+          find fei-bike -type f \( -name '*.html' -o -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.webmanifest' \) -print0 \
+            | xargs -0 sed -i 's#https://willie-yes100\.github\.io/fei-bike#https://yes100.ai/fei-bike#g'
+          if grep -rl 'willie-yes100\.github\.io/fei-bike' fei-bike; then
+            echo "還有舊網址沒換掉"
+            exit 1
+          fi
+
+      - name: Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fei-bike
+          if git diff --cached --quiet; then
+            echo "妃妃鐵馬沒有變更"
+            exit 0
+          fi
+          git commit -m "同步妃妃鐵馬（$(git -C .source rev-parse --short HEAD)）"
+          # 政策島同步也會推到 main，撞到時重試
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
