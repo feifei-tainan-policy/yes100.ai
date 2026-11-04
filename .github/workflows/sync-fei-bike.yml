@@ -5,8 +5,9 @@ name: Sync fei-bike
 # 測試版 preview/ 不複製。頁面裡的舊網址會換成 yes100.ai，分享卡和社群預覽才會連到這裡。
 on:
   schedule:
-    # GitHub 最短 5 分鐘一次，尖峰時段可能延遲
-    - cron: "*/5 * * * *"
+    # 台灣時間 2026-11-05 到 11-14 每天 06:17，共 10 次（cron 用 UTC：11/4～11/13 22:17）。
+    # cron 沒有年份，這個工作流程用完可以刪掉。平時的路線內容大多是靜態的，要立刻同步請手動執行。
+    - cron: "17 22 4-13 11 *"
   workflow_dispatch:
 
 permissions:
