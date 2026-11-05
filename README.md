@@ -9,5 +9,5 @@ https://yes100.ai/island/ 是 https://feifei-tainan-policy.com/island/（最新�
 
 https://yes100.ai/fei-bike/ 是 https://willie-yes100.github.io/fei-bike/（妃妃鐵馬）的同步複本。
 
-- `fei-bike/` 由這個 repo 的 GitHub Actions「Sync fei-bike」在台灣時間 2026-11-05 到 11-14 每天 06:17 從公開的 [willie-yes100.github.io](https://github.com/willie-yes100/willie-yes100.github.io) 複製過來，網址換成 yes100.ai，來源有變動才會更新。**不要直接改這個資料夾**，下次同步會蓋掉，內容請改來源。
+- `fei-bike/` 由這個 repo 的 GitHub Actions「Sync fei-bike」在台灣時間 2026-11-15 上午之前，每 15 分鐘檢查公開的 [willie-yes100.github.io](https://github.com/willie-yes100/willie-yes100.github.io)，來源有變動才複製過來並把網址換成 yes100.ai。GitHub 的排程可能延遲數小時。**不要直接改這個資料夾**，下次同步會蓋掉，內容請改來源。
 - 手動重新同步：這個 repo → Actions → Sync fei-bike → Run workflow。
