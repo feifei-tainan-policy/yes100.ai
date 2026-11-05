@@ -568,6 +568,9 @@ pollLive();setInterval(pollLive,30000);
 // ── 分享卡：在手機上用 canvas 畫，不上傳任何東西 ──
 let CARD=null,FMT='post';
 const SITE_URL='https://yes100.ai/fei-bike/';
+// 分享卡右下角的 QR（https://yes100.ai/fei-bike/，segno 預先算好；IG 限動、LINE 圖片上的網址點不了，用掃的）
+const QR=['11111110011110000011101111111', '10000010010000001111001000001', '10111010110010010111101011101', '10111010010110100001101011101', '10111010100111101000001011101', '10000010111000101011001000001', '11111110101010101010101111111', '00000000001100110100100000000', '01001010101010011011110110100', '11101101000010100010101110011', '11100011100010111100110001101', '11010001110001110110110011011', '10000011111010110111100101001', '00001101101010001100001010101', '10010111000011001010111010011', '10001000110101001000010101001', '01100111011101101000110000001', '11001100110101000010001010101', '00101011000001110100100000101', '00101001100100011101000111000', '11110110000101100110111111001', '00000000100110011000100010101', '11111110010100111101101010001', '10000010001000000111100011001', '10111010110010110011111110000', '10111010011011001000000100110', '10111010011110001101110001011', '10000010110101100100110101011', '11111110000000110110110011010'];
+function drawQR(g,x,y,sz){const n=QR.length,m=sz/(n+4);g.fillStyle='#fff';rr(g,x,y,sz,sz,18);g.fill();g.lineWidth=3;g.strokeStyle='#e4dccb';g.stroke();g.fillStyle='#1d2a22';QR.forEach((r,i)=>[...r].forEach((v,j)=>{if(v==='1')g.fillRect(x+(j+2)*m,y+(i+2)*m,m+0.6,m+0.6);}));g.font='800 22px "Noto Sans TC","PingFang TC",sans-serif';g.textAlign='center';g.fillStyle='#6b6f63';g.fillText('掃我看即時位置',x+sz/2,y+sz+30);g.textAlign='left';}
 function dateLabel(){const d=new Date(APP.date+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${'日一二三四五六'[d.getDay()]}）`;}
 function rr(c,x,y,w,h,r){c.beginPath();c.roundRect(x,y,w,h,r);}
 function fitText(c,txt,max,size,weight){let s=size;do{c.font=`${weight} ${s}px "Noto Sans TC","PingFang TC",sans-serif`;s-=2;}while(c.measureText(txt).width>max&&s>20);return s+2;}
@@ -619,23 +622,23 @@ function drawCard(o,fmt){
   // 呼籲
   const y3=my+mh+(fmt==='story'?120:90);
   const FOOT={live:['快來路邊幫妃妃加油！','即時位置與路線都在這裡 →'],est:['快來路邊幫妃妃加油！','預估位置，即時位置請看網站 →'],plan:['一起來路邊幫妃妃加油！','路線與預估時間都在這裡 →'],done:['謝謝大家路邊加油！明天見 🙌','全部行程與 37 區集章都在這裡 →']}[o.kind];
-  g2.font='900 58px "Noto Sans TC","PingFang TC",sans-serif';g2.fillStyle=ink;g2.fillText(FOOT?FOOT[0]:'我在這裡等妃妃！一起來 🙌',70,y3);
+  g2.font='900 58px "Noto Sans TC","PingFang TC",sans-serif';g2.fillStyle=ink;g2.fillText(FOOT?FOOT[0]:'我在這裡等妃妃！一起來 🙌',70,y3,740);
   g2.font='700 34px "Noto Sans TC","PingFang TC",sans-serif';g2.fillStyle='#6b6f63';
-  g2.fillText(FOOT?FOOT[1]:'⏰ 預估時間會有誤差，請提早 10 分鐘到路邊等待',70,y3+62);
-  g2.font='600 36px "IBM Plex Mono",ui-monospace,monospace';g2.fillStyle=green;g2.fillText(SITE_URL.replace('https://',''),70,y3+(FOOT?120:118));
+  g2.fillText(FOOT?FOOT[1]:'⏰ 預估時間會有誤差，請提早 10 分鐘到路邊等待',70,y3+62,740);
+  g2.font='600 36px "IBM Plex Mono",ui-monospace,monospace';g2.fillStyle=green;g2.fillText(SITE_URL.replace('https://',''),70,y3+(FOOT?120:118));drawQR(g2,W-70-170,y3-20,170);
   g2.font='600 26px "Noto Sans TC","PingFang TC",sans-serif';g2.fillStyle='#9a8f78';g2.fillText('© Yes100 AI Visual Lab',70,H-40);
   return c;
 }
 function fmt2(m){return fmt(m);}
 function openCard(o){CARD=o;renderCard();$('sheet').hidden=false;$('doShare').focus();}
-function renderCard(){const c=drawCard(CARD,FMT);CARD.canvas=c;$('cardImg').src=c.toDataURL('image/jpeg',0.9);
+function renderCard(){const c=(CARD.kind==='stamp'||CARD.kind==='sched'?drawBoard:drawCard)(CARD,FMT);CARD.canvas=c;$('cardImg').src=c.toDataURL('image/jpeg',0.9);
   $('fPost').setAttribute('aria-pressed',FMT==='post');$('fStory').setAttribute('aria-pressed',FMT==='story');}
 $('fPost').onclick=()=>{FMT='post';renderCard();};$('fStory').onclick=()=>{FMT='story';renderCard();};
 $('closeSheet').onclick=()=>{$('sheet').hidden=true;};
 $('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('sheet').hidden=true;});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')$('sheet').hidden=true;});
 function cardBlob(){return new Promise(r=>CARD.canvas.toBlob(r,'image/jpeg',0.92));}
-const cardText=()=>({live:`妃妃現在騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`,est:`妃妃預估騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`,plan:`妃妃鐵馬 ${dateLabel()} ${fmt(CARD.t)} 從 ${CARD.name} 出發，一起來路邊加油 ${SITE_URL}`,done:`妃妃鐵馬 ${dateLabel()} 騎完${CARD.name}，謝謝大家！${SITE_URL}`}[CARD.kind]||(CARD.kind==='live'?`妃妃現在騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`:`妃妃鐵馬 ${dateLabel()} 約 ${fmt(CARD.t)} 經過 ${CARD.name}，我在這裡等！一起來 ${SITE_URL}`));
+const cardText=()=>({stamp:`妃妃鐵馬已騎完 ${CARD.n}／37 區！看集章地圖 ${SITE_URL}`,sched:`妃妃鐵馬這幾天騎哪裡？幾點經過你家查這裡 ${SITE_URL}`,live:`妃妃現在騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`,est:`妃妃預估騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`,plan:`妃妃鐵馬 ${dateLabel()} ${fmt(CARD.t)} 從 ${CARD.name} 出發，一起來路邊加油 ${SITE_URL}`,done:`妃妃鐵馬 ${dateLabel()} 騎完${CARD.name}，謝謝大家！${SITE_URL}`}[CARD.kind]||(CARD.kind==='live'?`妃妃現在騎到 ${CARD.name}！快來路邊加油 ${SITE_URL}`:`妃妃鐵馬 ${dateLabel()} 約 ${fmt(CARD.t)} 經過 ${CARD.name}，我在這裡等！一起來 ${SITE_URL}`));
 $('doShare').onclick=async()=>{
   const b=await cardBlob(),f=new File([b],'妃妃鐵馬.jpg',{type:'image/jpeg'});
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:cardText()});return;}
@@ -655,6 +658,60 @@ $('doSave').onclick=async()=>{const b=await cardBlob();
   const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='妃妃鐵馬.jpg';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);};
 $('shareLive').onclick=()=>{if(LIVE.mode!=='live')return;openCard({kind:'live',leg:LIVE.k,i:LIVE.i,name:LIVE.where||APP.legs[LIVE.k].district,hm:LIVE.hm});};
 // 常駐分享鈕：騎乘中有即時位置＝即時卡；出發前＝出發卡；訊號中斷或沒有定位＝照時刻表的預估位置；騎完＝收工卡
+// 集章卡、行程表卡（不畫路線小地圖，另一套版面）
+function slotText(date,slot){const k=DATA.days.findIndex(D=>D.date===date),out=[];
+  if(k>=0)DATA.days[k].legs.forEach(L=>{if((hm2m(L.start)<720)===(slot==='上午'))out.push(...(L.dists||[L.district]));});
+  const Pl=(DATA.plan||[]).find(x=>x.date===date);(Pl?Pl.items:[]).filter(it=>it.slot===slot).forEach(it=>(it.dists||[]).forEach(n=>out.push(n)));
+  return [...new Set(out)].join('・');}
+function drawBoard(o,fmt){
+  const W=1080,H=fmt==='story'?1920:1350,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  const green='#1d5a37',pink='#d81e5b',ink='#1d2a22',paper='#f7f3ea',TC='"Noto Sans TC","PingFang TC",sans-serif',MO='"IBM Plex Mono",ui-monospace,monospace';
+  g.fillStyle=paper;g.fillRect(0,0,W,H);g.textBaseline='alphabetic';
+  const top=fmt==='story'?150:70;
+  g.font=`900 92px ${TC}`;g.fillStyle=green;g.fillText('鐵馬妃起來',70,top+90);
+  g.save();g.translate(560,top+30);g.rotate(-0.05);g.fillStyle=pink;rr(g,0,-20,450,110,18);g.fill();g.font=`900 80px ${TC}`;g.fillStyle='#fff';g.fillText('人民當靠3',22,68);g.restore();
+  const y1=top+170,foot=fmt==='story'?300:240;
+  if(o.kind==='stamp'){
+    const st=distState(),Fs=DATA.districts;let a=[1e9,1e9,-1e9,-1e9],nd=0;
+    Fs.forEach(f=>f.geometry.coordinates.forEach(pl=>pl[0].forEach(p=>{a[0]=Math.min(a[0],p[0]);a[1]=Math.min(a[1],p[1]);a[2]=Math.max(a[2],p[0]);a[3]=Math.max(a[3],p[1]);})));
+    const cls=n=>{const x=st[n];return !x?'':x.done.length===x.days.length?'done':x.done.length?'half':'plan';};
+    Fs.forEach(f=>{if(cls(f.properties.name)==='done')nd++;});o.n=nd;
+    g.font=`800 50px ${TC}`;g.fillStyle=ink;g.fillText('妃妃已經騎完',70,y1+30);
+    g.font=`600 170px ${MO}`;g.fillStyle=pink;g.fillText(String(nd),62,y1+190);const w=g.measureText(String(nd)).width;
+    g.font=`900 70px ${TC}`;g.fillStyle=green;g.fillText('／37 區',70+w+14,y1+185);
+    const mx=70,my=y1+230,mw=940,mh=H-my-foot-20,sc=Math.min(mw/((a[2]-a[0])*KX),mh/(a[3]-a[1])),ox=mx+(mw-(a[2]-a[0])*KX*sc)/2,oy=my+(mh-(a[3]-a[1])*sc)/2;
+    const M=p=>[ox+(p[0]-a[0])*KX*sc,oy+(a[3]-p[1])*sc];const seals=[];
+    Fs.forEach(f=>{const n=f.properties.name,k=cls(n);let big=null,ba=0;g.beginPath();
+      f.geometry.coordinates.forEach(pl=>{const r=pl[0];if(r.length>ba){ba=r.length;big=r;}r.forEach((p,i)=>{const q=M(p);i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]);});g.closePath();});
+      g.fillStyle=k==='done'?'#f6c9d8':k==='half'?'#fbe6ee':k==='plan'?'#e6efe7':'#efe8d8';g.fill();
+      g.setLineDash(k==='plan'?[8,6]:[]);g.lineWidth=k==='plan'?3:2;g.strokeStyle=k==='plan'?green:'#cdbf9f';g.stroke();g.setLineDash([]);
+      const q=M([big.reduce((x,p)=>x+p[0],0)/big.length,big.reduce((x,p)=>x+p[1],0)/big.length]);seals.push([q,k,n]);});
+    seals.forEach(([q,k,n])=>{if(k==='done'||k==='half'){g.save();g.translate(q[0],q[1]);g.rotate(-0.14);g.beginPath();g.arc(0,0,19,0,7);
+        if(k==='done'){g.fillStyle=pink;g.fill();}else{g.setLineDash([5,4]);g.lineWidth=3;g.strokeStyle=pink;g.stroke();g.setLineDash([]);}
+        g.font=`900 21px ${TC}`;g.textAlign='center';g.fillStyle=k==='done'?'#fff':pink;g.fillText('妃',0,7);g.restore();}
+      else{g.font=`600 19px ${TC}`;g.textAlign='center';g.fillStyle='#8a8170';g.fillText(n.length>2?n.slice(0,-1):n,q[0],q[1]+6);}});
+    g.textAlign='left';
+    const ing=Object.entries(st).filter(([n,x])=>x.done.length&&x.done.length<x.days.length).map(([n])=>n),nxt=DATA.days.find((D,k)=>!dayDone(k));
+    const note=(ing.length?`進行中：${ing.join('、')}`:'')+(ing.length&&nxt?'｜':'')+(nxt?`下一站：${dLabel(nxt.date)} ${nxt.title}`:'');
+    if(BIKE.complete&&BIKE.naturalWidth){const qh=fmt==='story'?380:300,qw=qh*BIKE.naturalWidth/BIKE.naturalHeight;g.drawImage(BIKE,W-qw-30,my-60,qw,qh);}
+    g.font=`800 38px ${TC}`;g.fillStyle=ink;g.fillText(note,70,H-foot+40,740);
+  }else{
+    g.font=`900 64px ${TC}`;g.fillStyle=ink;g.fillText('這幾天騎到哪？',70,y1+50);
+    if(BIKE.complete&&BIKE.naturalWidth){const qh=fmt==='story'?260:210,qw=qh*BIKE.naturalWidth/BIKE.naturalHeight;g.drawImage(BIKE,W-qw-40,y1-40,qw,qh);}
+    const td=todayIso(),N=fmt==='story'?10:7,rows=[];for(let d=new Date(td+'T12:00:00+08:00');rows.length<N;d=new Date(d.getTime()+864e5))rows.push(isoOf(d));
+    const ty=y1+(fmt==='story'?220:170),rh=(H-ty-foot-30)/(N+1),c1=70,c2=380,c3=710,cw=300;
+    g.font=`800 32px ${TC}`;g.fillStyle='#6b6f63';g.fillText('日期',c1+16,ty+rh*0.62);g.fillText('上午',c2,ty+rh*0.62);g.fillText('下午',c3,ty+rh*0.62);
+    rows.forEach((date,r)=>{const y=ty+rh*(r+1),am=slotText(date,'上午'),pm=slotText(date,'下午'),today=date===td,dw=new Date(date+'T12:00:00+08:00').getDay();
+      if(today){g.fillStyle='rgba(216,30,91,.12)';rr(g,c1,y+4,940,rh-8,16);g.fill();}
+      g.strokeStyle='#e4dccb';g.lineWidth=2;g.beginPath();g.moveTo(c1,y);g.lineTo(c1+940,y);g.stroke();
+      g.font=`900 ${Math.round(rh*0.38)}px ${TC}`;g.fillStyle=today?pink:green;g.fillText(`${+date.slice(5,7)}/${+date.slice(8)}（${'日一二三四五六'[dw]}）`,c1+16,y+rh*0.64);
+      [[am,c2],[pm,c3]].forEach(([t,x])=>{const s=t||'—';const z=fitText(g,s,cw,Math.round(rh*0.4),900);g.fillStyle=t?ink:'#b9b09c';g.fillText(s,x,y+rh*0.64);});});
+  }
+  g.font=`900 50px ${TC}`;g.fillStyle=ink;g.fillText(o.kind==='stamp'?'下一區，在路邊等妃妃！':'幾點經過你家？查路線 →',70,H-foot+(o.kind==='stamp'?110:60));
+  g.font=`600 36px ${MO}`;g.fillStyle=green;g.fillText(SITE_URL.replace('https://',''),70,H-foot+(o.kind==='stamp'?180:118));
+  g.font=`600 26px ${TC}`;g.fillStyle='#9a8f78';g.fillText('© Yes100 AI Visual Lab',70,H-22);
+  drawQR(g,W-70-170,H-foot-10,170);
+  return c;}
 function segAt(L,i){let n=L.district;for(const x of L.segs)if(!x.temple&&x.i0<=i)n=x.name;return n;}
 $('shareNow').onclick=()=>{
   if(LIVE.mode==='live'&&LIVE.age<=5)return openCard({kind:'live',leg:LIVE.k,i:LIVE.i,name:LIVE.where||APP.legs[LIVE.k].district,hm:LIVE.hm});
@@ -665,8 +722,10 @@ $('shareNow').onclick=()=>{
   const t=nm-(LIVE.mode==='live'?LIVE.delay||0:0);let b={k:0,i:0,d:1e9};Ls.forEach((L,k)=>L.T.forEach((x,i)=>{const d=Math.abs(x-t);if(d<b.d)b={k,i,d};}));
   openCard({kind:'est',leg:b.k,i:b.i,name:segAt(Ls[b.k],b.i),sub:`${fmt(nm)} 預估位置`});
 };
+{const _sn=$('shareNow').onclick;$('shareNow').onclick=e=>{if(PAGE==='Stamps'||PAGE==='All')return openCard({kind:PAGE==='Stamps'?'stamp':'sched'});_sn(e);};}   // 集章、全部日程分頁分享各自的卡
 // ── 分頁 ──
-function showPage(p){[...$('pages').children].forEach(b=>b.setAttribute('aria-selected',b.dataset.p===p));
+var PAGE='Today';
+function showPage(p){PAGE=p;$('shareNow').textContent={Stamps:'📤 分享集章進度',All:'📤 分享行程表'}[p]||'📤 分享妃妃騎到哪';[...$('pages').children].forEach(b=>b.setAttribute('aria-selected',b.dataset.p===p));
   ['Today','Stamps','All'].forEach(x=>{$('pg'+x).hidden=x!==p;$('pg'+x).style.display=x!==p?'none':(x==='Today'?'flex':'');});
   if(p==='Stamps')renderStamps();if(p==='All')renderAll();if(p==='Today'){resize();fit();}}
 $('pages').onclick=e=>{const b=e.target.closest('button');if(b)showPage(b.dataset.p);};
