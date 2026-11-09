@@ -11,14 +11,14 @@ name: Sync fei-bike
 on:
   schedule:
     # 備用。cron 用 UTC 而且沒有年份，同步期結束後這個工作流程可以刪掉。
-    - cron: "7,22,37,52 * 5-14 11 *"
+    - cron: "7,22,37,52 * 5-28 11 *"
   workflow_dispatch:
 
 permissions: {}
 
 env:
-  # 台灣時間 2026-11-15 08:00，過了就不再接力
-  SYNC_UNTIL: "2026-11-15T00:00:00Z"
+  # 台灣時間 2026-11-29 00:00（11/28 投票日當天結束）。過了就不再接力，備用定時也不再複製；手動執行照常同步。
+  SYNC_UNTIL: "2026-11-28T16:00:00Z"
 
 jobs:
   sync:
@@ -42,6 +42,11 @@ jobs:
 
       - name: Copy fei-bike
         run: |
+          # GitHub 的定時可能晚好幾小時才執行，過了期限才跑到的就不複製（之後沒有變更，不會產生 commit）
+          if [ "$GITHUB_EVENT_NAME" = schedule ] && [ "$(date -u +%s)" -ge "$(date -u -d "$SYNC_UNTIL" +%s)" ]; then
+            echo "已過同步期限，備用定時不再複製"
+            exit 0
+          fi
           SRC=.source/fei-bike
           # 來源不完整時停在這裡，線上頁面維持原樣
           test -s "$SRC/index.html"
