@@ -1,26 +1,34 @@
 name: Sync fei-bike
 
-# 定時讀取公開的 willie-yes100/willie-yes100.github.io，把 fei-bike/ 複製到 https://yes100.ai/fei-bike/。
+# 讀取公開的 willie-yes100/willie-yes100.github.io，把 fei-bike/ 複製到 https://yes100.ai/fei-bike/。
 # 只讀取來源 repo，不會改動它；來源沒有變動就不會產生 commit。
 # 測試版 preview/ 不複製。頁面裡的舊網址會換成 yes100.ai，分享卡和社群預覽才會連到這裡。
+#
+# 接力檢查：每次檢查完，next 先等 fei-bike-timer 環境的計時器（Settings → Environments，等待時不佔用機器），
+# 再自己啟動下一次，所以大約每 15 分鐘檢查一次，到 SYNC_UNTIL 為止。
+# GitHub 內建的定時常常延遲數小時，只留作備用：接力斷掉時，它下一次執行會把接力接回來。
+# 要停止：取消正在等待的那次執行，或停用這個工作流程。
 on:
   schedule:
-    # 到台灣時間 2026-11-15 上午，每 15 分鐘檢查一次來源，有變動才更新（cron 用 UTC），沒變動不會產生 commit。
-    # GitHub 的排程可能延遲數小時，要立刻同步請手動執行。cron 沒有年份，這個工作流程用完可以刪掉。
+    # 備用。cron 用 UTC 而且沒有年份，同步期結束後這個工作流程可以刪掉。
     - cron: "7,22,37,52 * 5-14 11 *"
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
-concurrency:
-  group: sync-fei-bike
-  cancel-in-progress: false
+env:
+  # 台灣時間 2026-11-15 08:00，過了就不再接力
+  SYNC_UNTIL: "2026-11-15T00:00:00Z"
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
+    concurrency:
+      group: sync-fei-bike
+      cancel-in-progress: false
     steps:
       - name: Checkout yes100.ai
         uses: actions/checkout@v7
@@ -62,5 +70,38 @@ jobs:
           for i in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             sleep 5
+          done
+          exit 1
+
+  next:
+    needs: sync
+    # 這次同步失敗也要接力；手動取消這次執行就不再接力
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: fei-bike-timer
+    permissions:
+      actions: write
+    steps:
+      - name: Start the next check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          if [ "$(date -u +%s)" -ge "$(date -u -d "$SYNC_UNTIL" +%s)" ]; then
+            echo "已過同步期限，不再接力"
+            exit 0
+          fi
+          # 30 分鐘內建立、還沒結束的別次執行會自己接力，這次就停，避免同時有兩條
+          others=$(gh api "repos/$REPO/actions/workflows/sync-fei-bike.yml/runs?per_page=20" \
+            --jq "[.workflow_runs[] | select(.id != $RUN_ID and .status != \"completed\" and (.created_at | fromdateiso8601) > (now - 1800))] | length")
+          if [ "$others" -gt 0 ]; then
+            echo "已有其他檢查在進行，由它接力"
+            exit 0
+          fi
+          for i in 1 2 3 4 5; do
+            gh api -X POST "repos/$REPO/actions/workflows/sync-fei-bike.yml/dispatches" -f ref=main && exit 0
+            sleep 15
           done
           exit 1
